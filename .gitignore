@@ -1,0 +1,6 @@
+## Terraform .gitignore
+**/*.tfstate
+**/*.hcl
+*/.terraform/*
+**/*.lock*x:
+**/*.zip
