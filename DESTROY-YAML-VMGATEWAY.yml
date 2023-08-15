@@ -1,0 +1,34 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: DestroyResources
+  jobs:
+  - job: InitAndDestroy
+    steps:
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use Terraform latest'
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform init'
+      inputs:
+        command: init
+        workingDirectory: Linux
+        backendType: azurerm
+        backendServiceArm: GianServicePrincipal
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform destroy'
+      inputs:
+        command: destroy
+        workingDirectory: Linux
+        environmentServiceName: GianServicePrincipal
+        runAzLogin: true
+        autoApprove: true
+
