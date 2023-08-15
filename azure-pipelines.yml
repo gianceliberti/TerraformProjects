@@ -9,33 +9,50 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-  displayName: 'Use Terraform latest'
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-  displayName: 'terraform init'
-  inputs:
-    command: init
-    workingDirectory: Linux
-    backendType: azurerm
-    backendServiceArm: GianServicePrincipal
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-  displayName: 'terraform validate'
-  inputs:
-    workingDirectory: Linux
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-  displayName: 'terraform plan'
-  inputs:
-    command: plan
-    workingDirectory: Linux
-    environmentServiceName: GianServicePrincipal
-    runAzLogin: true
+stages:
+- stage: Initialization
+  jobs:
+  - job: Setup
+    steps:
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use Terraform latest'
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform init'
+      inputs:
+        command: init
+        workingDirectory: Linux
+        backendType: azurerm
+        backendServiceArm: GianServicePrincipal
 
+- stage: Validation
+  jobs:
+  - job: Validate
+    steps:
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform validate'
+      inputs:
+        workingDirectory: Linux
 
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- stage: Planning
+  jobs:
+  - job: Plan
+    steps:
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform plan'
+      inputs:
+        command: plan
+        workingDirectory: Linux
+        environmentServiceName: GianServicePrincipal
+        runAzLogin: true
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- stage: Apply
+  jobs:
+  - job: ApplyChanges
+    steps:
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform apply'
+      inputs:
+        command: apply
+        workingDirectory: Linux
+        environmentServiceName: GianServicePrincipal
+        runAzLogin: true
