@@ -2,7 +2,6 @@
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
-
 trigger:
 - main
 
@@ -10,9 +9,9 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-- stage: Initialization
+- stage: PlanChanges
   jobs:
-  - job: Setup
+  - job: PrepareAndPlan
     steps:
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
       displayName: 'Use Terraform latest'
@@ -23,20 +22,6 @@ stages:
         workingDirectory: Linux
         backendType: azurerm
         backendServiceArm: GianServicePrincipal
-
-- stage: Validation
-  jobs:
-  - job: Validate
-    steps:
-    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-      displayName: 'terraform validate'
-      inputs:
-        workingDirectory: Linux
-
-- stage: Planning
-  jobs:
-  - job: Plan
-    steps:
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
       displayName: 'terraform plan'
       inputs:
@@ -45,14 +30,33 @@ stages:
         environmentServiceName: GianServicePrincipal
         runAzLogin: true
 
-- stage: Apply
+- stage: ApplyChanges
   jobs:
-  - job: ApplyChanges
+  - job: PreparePlanAndApply
     steps:
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use Terraform latest'
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform init'
+      inputs:
+        command: init
+        workingDirectory: Linux
+        backendType: azurerm
+        backendServiceArm: GianServicePrincipal
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+      displayName: 'terraform plan'
+      inputs:
+        command: plan
+        workingDirectory: Linux
+        environmentServiceName: GianServicePrincipal
+        runAzLogin: true
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
       displayName: 'terraform apply'
       inputs:
         command: apply
         workingDirectory: Linux
+        autoApprove: true
         environmentServiceName: GianServicePrincipal
         runAzLogin: true
+
+
